@@ -7,9 +7,9 @@ angular.module('FormErrors', [])
         // only works if embedded in a form or an ngForm (that's in a form).
         // It does use its closest parent that is a form OR ngForm
         template:
-            '<div class="alert-box alert">' +
+            '<div class="alert-box alert" ng-hide="errors.length === 0">' +
               '<ul class="form-errors">' +
-                '<li class="form-error" ng-repeat="error in errors">' +
+                '<li class="form-error" ng-repeat="error in errors track by $index">' +
                     '{{ error }}' +
                 '</li>' +
               '</ul>' +
@@ -20,7 +20,7 @@ angular.module('FormErrors', [])
         restrict: 'AE',
         require: ['?^form', 'formErrors'],
         // isolated scope is required so we can embed ngForms and errors
-        scope: { form: '=?', recurse: '=?showChildErrors' },
+        scope: { form: '=?', recurse: '=?showChildErrors', duplicates: '=duplicates' },
         controller: [function () {}],
         link: function postLink(scope, elem, attrs, ctrls) {
             var ngModelCtrl = ctrls[0];
@@ -33,7 +33,14 @@ angular.module('FormErrors', [])
 
             var thisCrawlErrors = angular.bind(formErrorsCtrl, crawlErrors);
             var getErrors = function () {
-                scope.errors = thisCrawlErrors(ngModelCtrl, scope.recurse);
+              var errors = thisCrawlErrors(ngModelCtrl, scope.recurse);
+
+              if (false === scope.duplicates) {
+                // Remove Duplicates;
+                errors = _.uniq(errors);
+              }
+
+              scope.errors = errors;
             };
 
             // only update the list of errors if there was actually a change in $error
